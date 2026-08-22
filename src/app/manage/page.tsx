@@ -216,7 +216,7 @@ export default function ManagePage() {
               Manage Videos
             </h1>
             <p className="text-xs text-zinc-400 mt-0.5">
-              Upload video files, view auto-synced public folder files, or edit details.
+              Upload new videos, view your collection, or edit details.
             </p>
           </div>
 
@@ -384,9 +384,6 @@ export default function ManagePage() {
                   placeholder="e.g. /api/stream/my-clip.mp4 or https://..."
                   className="w-full px-3 py-2 bg-zinc-950 border border-zinc-700 rounded-lg text-white text-xs sm:text-sm font-mono outline-none focus:border-zinc-500"
                 />
-                <p className="text-[11px] text-zinc-500">
-                  Tip: For files in <code className="text-zinc-400">public/videos/clip.mp4</code>, use <code className="text-amber-300">/api/stream/clip.mp4</code>.
-                </p>
               </div>
 
               {/* Date */}
@@ -471,10 +468,10 @@ export default function ManagePage() {
               <div>
                 <h2 className="text-base font-bold text-white flex items-center gap-2">
                   <FolderSearch className="w-4 h-4 text-red-500" />
-                  <span>Files in <code className="text-amber-300 font-mono">public/videos</code></span>
+                  <span>Detected Video Files</span>
                 </h2>
                 <p className="text-xs text-zinc-400">
-                  Files dropped here are automatically synchronized into your library.
+                  Video files found in your local folders.
                 </p>
               </div>
 
@@ -498,7 +495,9 @@ export default function ManagePage() {
                     <div className="flex items-center space-x-2.5">
                       <FileVideo className="w-5 h-5 text-red-500 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <h4 className="text-xs font-bold text-white truncate">{file.title}</h4>
+                        <div className="flex items-center justify-between gap-1">
+                          <h4 className="text-xs font-bold text-white truncate">{file.title}</h4>
+                        </div>
                         <p className="text-[10px] text-zinc-400 font-mono truncate">{file.filename}</p>
                       </div>
                     </div>
@@ -518,9 +517,9 @@ export default function ManagePage() {
             ) : (
               <div className="p-8 rounded-xl bg-zinc-900/50 border border-dashed border-zinc-800 text-center space-y-2">
                 <FileVideo className="w-8 h-8 text-zinc-600 mx-auto" />
-                <h4 className="text-sm font-bold text-zinc-300">No video files in <code className="text-amber-300">public/videos/</code></h4>
+                <h4 className="text-sm font-bold text-zinc-300">No local video files found</h4>
                 <p className="text-xs text-zinc-500">
-                  Drop your family video files into <code className="text-zinc-400">public/videos</code> or click Upload Video above.
+                  Use the Upload Video button above to add new family videos.
                 </p>
               </div>
             )}

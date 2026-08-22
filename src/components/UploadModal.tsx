@@ -181,7 +181,7 @@ export default function UploadModal({ isOpen, onClose, onSuccess }: UploadModalP
                     Drag & drop video here, or <span className="text-red-400 underline">browse</span>
                   </p>
                   <p className="text-[11px] text-zinc-500 mt-0.5">
-                    Supports MP4, WebM, MOV, MKV (saved directly to public/videos)
+                    Supports MP4, WebM, MOV, and MKV video formats
                   </p>
                 </div>
               </div>
@@ -223,7 +223,7 @@ export default function UploadModal({ isOpen, onClose, onSuccess }: UploadModalP
           {uploadProgress !== null && (
             <div className="space-y-1.5 pt-1">
               <div className="flex items-center justify-between text-xs font-semibold text-zinc-300">
-                <span>{uploadProgress === 100 ? "Finalizing..." : "Uploading directly to public folder..."}</span>
+                <span>{uploadProgress === 100 ? "Processing video..." : "Uploading video file..."}</span>
                 <span className="font-mono text-red-400">{uploadProgress}%</span>
               </div>
               <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">

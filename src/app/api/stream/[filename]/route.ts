@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-// Allow streaming of local videos stored in public/videos with HTTP Range requests (206 Partial Content)
+export const dynamic = "force-dynamic";
+
+// Stream local videos stored in src/videos or public/videos with HTTP Range requests (206 Partial Content)
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ filename: string }> }
@@ -12,11 +14,19 @@ export async function GET(
     
     // Sanitize filename to prevent directory traversal
     const safeFilename = path.basename(filename);
-    const videoPath = path.join(process.cwd(), "public", "videos", safeFilename);
+    
+    // Look in src/videos first, then fallback to public/videos
+    const srcVideoPath = path.join(process.cwd(), "src", "videos", safeFilename);
+    const publicVideoPath = path.join(process.cwd(), "public", "videos", safeFilename);
 
-    if (!fs.existsSync(videoPath)) {
+    let videoPath = "";
+    if (fs.existsSync(srcVideoPath)) {
+      videoPath = srcVideoPath;
+    } else if (fs.existsSync(publicVideoPath)) {
+      videoPath = publicVideoPath;
+    } else {
       return NextResponse.json(
-        { error: "Video file not found in public/videos directory" },
+        { error: `Video file "${safeFilename}" not found in src/videos or public/videos` },
         { status: 404 }
       );
     }

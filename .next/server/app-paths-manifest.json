@@ -1,8 +1,0 @@
-{
-  "/api/videos/route": "app/api/videos/route.js",
-  "/api/stream/[filename]/route": "app/api/stream/[filename]/route.js",
-  "/api/scan/route": "app/api/scan/route.js",
-  "/page": "app/page.js",
-  "/manage/page": "app/manage/page.js",
-  "/watch/[id]/page": "app/watch/[id]/page.js"
-}

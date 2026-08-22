@@ -5,8 +5,13 @@ import { pipeline } from "stream/promises";
 import { Readable } from "stream";
 import { Video } from "@/types/video";
 
+export const dynamic = "force-dynamic";
+
+// Increase max execution time for large video uploads if running in supported environments
+export const maxDuration = 300;
+
 const dataFilePath = path.join(process.cwd(), "src", "data", "videos.json");
-const publicVideosDir = path.join(process.cwd(), "public", "videos");
+const srcVideosDir = path.join(process.cwd(), "src", "videos");
 
 const SAMPLE_POSTERS = [
   "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80",
@@ -32,8 +37,8 @@ function saveVideos(videos: Video[]) {
 
 export async function POST(req: NextRequest) {
   try {
-    if (!fs.existsSync(publicVideosDir)) {
-      fs.mkdirSync(publicVideosDir, { recursive: true });
+    if (!fs.existsSync(srcVideosDir)) {
+      fs.mkdirSync(srcVideosDir, { recursive: true });
     }
 
     const formData = await req.formData();
@@ -51,12 +56,12 @@ export async function POST(req: NextRequest) {
     const ext = path.extname(originalName) || ".mp4";
     const baseName = path.basename(originalName, ext).replace(/[^a-zA-Z0-9_-]/g, "_");
     const safeFilename = `${baseName}${ext}`;
-    const destinationPath = path.join(publicVideosDir, safeFilename);
+    const destinationPath = path.join(srcVideosDir, safeFilename);
 
-    // Stream file directly to disk to prevent RAM exhaustion
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    fs.writeFileSync(destinationPath, buffer);
+    // Stream the file directly to disk to handle 10 GB+ files without exhausting RAM
+    const writeStream = fs.createWriteStream(destinationPath);
+    const nodeReadable = Readable.fromWeb(file.stream() as any);
+    await pipeline(nodeReadable, writeStream);
 
     const stat = fs.statSync(destinationPath);
 
@@ -76,7 +81,7 @@ export async function POST(req: NextRequest) {
     const newVideo: Video = {
       id: videoId,
       title: cleanTitle,
-      description: customDescription || "Uploaded family video.",
+      description: customDescription || "",
       videoUrl: `/api/stream/${safeFilename}`,
       thumbnailUrl: SAMPLE_POSTERS[Math.floor(Math.random() * SAMPLE_POSTERS.length)],
       fileSize: stat.size,
@@ -84,14 +89,14 @@ export async function POST(req: NextRequest) {
       date: formattedDate,
     };
 
-    // Remove duplicate entry for the same filename if any
+    // Replace duplicate if exists
     const updatedVideos = videos.filter((v) => !v.videoUrl.endsWith(`/${safeFilename}`));
     updatedVideos.unshift(newVideo);
     saveVideos(updatedVideos);
 
     return NextResponse.json({
       success: true,
-      message: "Video uploaded and indexed successfully!",
+      message: "Video uploaded and indexed successfully into src/videos!",
       video: newVideo,
     });
   } catch (error) {

@@ -62,12 +62,7 @@ export default function HomePage() {
               Family Video Library
             </h1>
             <p className="text-xs sm:text-sm text-zinc-400 mt-1 flex items-center gap-2">
-              <span>{videos.length} {videos.length === 1 ? "video" : "videos"} available</span>
-              <span className="text-zinc-600">•</span>
-              <span className="text-emerald-400 text-xs flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Auto-syncing public/videos
-              </span>
+              <span>{videos.length} {videos.length === 1 ? "video" : "videos"} in your collection</span>
             </p>
           </div>
 
@@ -155,7 +150,7 @@ export default function HomePage() {
               <p className="text-xs text-zinc-400">
                 {searchQuery
                   ? "Try searching for a different keyword."
-                  : "Upload a video using the button above or drop files into public/videos/."}
+                  : "Click below to upload and add your first family video."}
               </p>
               {!searchQuery && (
                 <button

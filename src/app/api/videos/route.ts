@@ -3,7 +3,10 @@ import fs from "fs";
 import path from "path";
 import { Video } from "@/types/video";
 
+export const dynamic = "force-dynamic";
+
 const dataFilePath = path.join(process.cwd(), "src", "data", "videos.json");
+const srcVideosDir = path.join(process.cwd(), "src", "videos");
 const publicVideosDir = path.join(process.cwd(), "public", "videos");
 
 const SAMPLE_POSTERS = [
@@ -33,22 +36,32 @@ function saveVideos(videos: Video[]) {
   }
 }
 
-// Auto-sync files physically present in public/videos with the catalog
-function syncPublicVideosFolder(catalog: Video[]): Video[] {
+// Auto-sync files physically present in src/videos and public/videos
+function syncVideosDirectories(catalog: Video[]): Video[] {
   try {
+    if (!fs.existsSync(srcVideosDir)) {
+      fs.mkdirSync(srcVideosDir, { recursive: true });
+    }
     if (!fs.existsSync(publicVideosDir)) {
       fs.mkdirSync(publicVideosDir, { recursive: true });
-      return catalog;
     }
 
-    const files = fs.readdirSync(publicVideosDir);
     const videoExts = [".mp4", ".webm", ".mov", ".mkv", ".m4v"];
-    const videoFiles = files.filter((f) => videoExts.includes(path.extname(f).toLowerCase()));
+    
+    // Collect all video files from both directories
+    const srcFiles = fs.existsSync(srcVideosDir)
+      ? fs.readdirSync(srcVideosDir).filter((f) => videoExts.includes(path.extname(f).toLowerCase()))
+      : [];
+    const publicFiles = fs.existsSync(publicVideosDir)
+      ? fs.readdirSync(publicVideosDir).filter((f) => videoExts.includes(path.extname(f).toLowerCase()))
+      : [];
+
+    const allDetectedFiles = Array.from(new Set([...srcFiles, ...publicFiles]));
 
     let updated = false;
     const currentVideos = [...catalog];
 
-    for (const filename of videoFiles) {
+    for (const filename of allDetectedFiles) {
       const isAlreadyIndexed = currentVideos.some(
         (v) =>
           v.videoUrl === `/api/stream/${filename}` ||
@@ -57,7 +70,10 @@ function syncPublicVideosFolder(catalog: Video[]): Video[] {
       );
 
       if (!isAlreadyIndexed) {
-        const filePath = path.join(publicVideosDir, filename);
+        const filePath = fs.existsSync(path.join(srcVideosDir, filename))
+          ? path.join(srcVideosDir, filename)
+          : path.join(publicVideosDir, filename);
+
         const stat = fs.statSync(filePath);
         const ext = path.extname(filename);
         const cleanTitle = path
@@ -68,7 +84,7 @@ function syncPublicVideosFolder(catalog: Video[]): Video[] {
         const newEntry: Video = {
           id: `local-${path.basename(filename, ext).replace(/[^a-zA-Z0-9_-]/g, "-")}`,
           title: cleanTitle,
-          description: "Video saved in public folder.",
+          description: "",
           videoUrl: `/api/stream/${filename}`,
           thumbnailUrl: SAMPLE_POSTERS[Math.floor(Math.random() * SAMPLE_POSTERS.length)],
           fileSize: stat.size,
@@ -100,8 +116,8 @@ export async function GET(req: NextRequest) {
 
     let videos = getVideos();
     
-    // Automatically auto-sync with public/videos directory
-    videos = syncPublicVideosFolder(videos);
+    // Automatically auto-sync with src/videos & public/videos directories
+    videos = syncVideosDirectories(videos);
 
     // Query single video
     if (id) {

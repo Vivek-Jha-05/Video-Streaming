@@ -1,31 +1,24 @@
 # 📹 Family Videos — Simple Personal Video Streaming Platform
 
-A **clean, simple, zero-cost video streaming platform** designed specifically for your family videos. No complex Netflix clone clutter, no categories or suggestion structures — just your videos, a fast search bar, and instant playback.
+A **clean, simple, zero-cost video streaming platform** designed specifically for your family videos. No complex Netflix clone clutter, no categories or suggestion structures — just your videos, a fast search bar, effortless uploads, and automatic file detection.
 
 ---
 
-## 🌟 Features
+## 🌟 How Adding Videos Works (2 Super Easy Ways!)
 
-- 👨‍👩‍👧‍👦 **Simple, Clean Family Interface**:
-  - No complex categories, algorithms, or suggestion rows.
-  - Straightforward gallery of all your family videos with title, date, duration, and poster.
-  - Search bar to instantly filter videos as you type.
-- ⚡ **No Authentication / Hassle-Free Watching**:
-  - Anyone with your platform link can open and watch immediately.
-  - Each family member's device remembers their own playback progress automatically.
-- 🎥 **Fast HTTP Range Streaming (`206 Partial Content`)**:
-  - Streams `.mp4`, `.webm`, `.mov` files directly from `public/videos/`.
-  - Zero server memory overhead and instant seek across large videos.
-- 🎛️ **Clean Video Player**:
-  - Play/Pause with spacebar
-  - Fast forward / Rewind 10s (`←` / `→`)
-  - Volume slider and mute toggle
-  - Speed Controls (0.5x, 0.75x, 1x, 1.25x, 1.5x, 2x)
-  - Fullscreen & Picture-in-Picture mode
-  - Auto-resumes playback from where you left off.
-- 📁 **Simple Video Management & Folder Scanner**:
-  - Drop video files into `public/videos/`.
-  - Open `/manage` and click **Scan Folder** &rarr; **Add to Library** to index new videos in 1 click!
+### 🚀 Method 1: Automatic Live Detection (Easiest!)
+1. Just drag and drop or copy any `.mp4`, `.webm`, or `.mov` files into:
+   ```text
+   public/videos/
+   ```
+2. Open or refresh the website.
+3. **That's it!** The platform automatically scans `public/videos/`, extracts clean titles from filenames (e.g. `Summer_Roadtrip_2024.mp4` &rarr; `"Summer Roadtrip 2024"`), computes the file size and date, and displays the video in your library immediately!
+
+### 📤 Method 2: Direct Browser Upload with Live Progress
+1. Open the platform in your browser at [http://localhost:3000](http://localhost:3000).
+2. Click the **"Upload Video"** button.
+3. Drag and drop your video file into the popup.
+4. Watch the live upload progress bar (`0% → 100%`). It saves the file directly into `public/videos/` with zero RAM buffering!
 
 ---
 
@@ -41,14 +34,14 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 📂 How to Add Your Videos
+## 🎥 Features
 
-1. **Place your video files** (`.mp4`, `.webm`, `.mov`) in:
-   ```text
-   public/videos/
-   ```
-2. Open **[http://localhost:3000/manage](http://localhost:3000/manage)** and switch to the **Scan Folder** tab.
-3. Click **"Add to Library"** next to your video and save!
+- 👨‍👩‍👧‍👦 **Simple, Clean Family Interface**: Straightforward gallery of all your family videos with title, date, duration, and poster.
+- 🔍 **Instant Search Bar**: Filter videos as you type right on the home page.
+- ⚡ **No Authentication / Hassle-Free Watching**: Anyone with your platform link can open and watch immediately.
+- 💾 **Smart Watch Progress**: Each family member's device remembers their own playback progress automatically.
+- 🎥 **Fast HTTP Range Streaming (`206 Partial Content`)**: Streams `.mp4`, `.webm`, `.mov` files directly from `public/videos/` with zero server memory overhead and instant seeking.
+- 🎛️ **Clean Video Player**: Play/Pause with spacebar, fast forward / rewind 10s (`←` / `→`), volume slider, speed controls (0.5x to 2x), fullscreen, and PiP.
 
 ---
 
