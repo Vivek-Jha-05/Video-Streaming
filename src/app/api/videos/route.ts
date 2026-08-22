@@ -115,9 +115,6 @@ export async function GET(req: NextRequest) {
     const id = searchParams.get("id");
 
     let videos = getVideos();
-    
-    // Automatically auto-sync with src/videos & public/videos directories
-    videos = syncVideosDirectories(videos);
 
     // Query single video
     if (id) {
