@@ -5,9 +5,6 @@ import Navbar from "@/components/Navbar";
 export const metadata: Metadata = {
   title: "Family Videos — Personal Video Library",
   description: "Watch personal family moments, trips, celebrations, and movies anywhere in high definition.",
-  icons: {
-    icon: "/favicon.ico",
-  },
 };
 
 export default function RootLayout({
