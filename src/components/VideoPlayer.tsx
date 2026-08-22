@@ -295,7 +295,6 @@ export default function VideoPlayer({ video, onEnded }: VideoPlayerProps) {
         poster={video.thumbnailUrl}
         preload="metadata"
         playsInline
-        crossOrigin="anonymous"
         onClick={togglePlay}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
