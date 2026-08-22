@@ -13,11 +13,16 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [continueWatchingList, setContinueWatchingList] = useState<Video[]>([]);
+  const [isPrivateVault, setIsPrivateVault] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
   const loadVideos = async () => {
     try {
       setLoading(true);
+      if (typeof window !== "undefined") {
+        const isPriv = window.location.hostname.startsWith("private.") || window.location.search.includes("scope=private");
+        setIsPrivateVault(isPriv);
+      }
       const res = await fetch("/api/videos");
       const data = await res.json();
       if (Array.isArray(data)) {
@@ -58,8 +63,13 @@ export default function HomePage() {
         {/* Top Header & Quick Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-800">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Family Video Library
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+              <span>{isPrivateVault ? "Private Family Vault" : "Family Video Library"}</span>
+              {isPrivateVault && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-950/80 text-amber-300 border border-amber-800/80">
+                  Immediate Family
+                </span>
+              )}
             </h1>
             <p className="text-xs sm:text-sm text-zinc-400 mt-1 flex items-center gap-2">
               <span>{videos.length} {videos.length === 1 ? "video" : "videos"} in your collection</span>

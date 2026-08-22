@@ -8,6 +8,7 @@ export interface Video {
   fileSize?: number;      // in bytes
   uploadedAt: string;     // ISO date
   date?: string;          // e.g. "Summer 2024" or "Dec 2023"
+  visibility?: "shared" | "private"; // "shared" for all relatives, "private" for immediate family
 }
 
 export interface WatchProgress {

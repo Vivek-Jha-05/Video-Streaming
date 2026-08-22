@@ -6,8 +6,6 @@ import { Video } from "@/types/video";
 export const dynamic = "force-dynamic";
 
 const dataFilePath = path.join(process.cwd(), "src", "data", "videos.json");
-const srcVideosDir = path.join(process.cwd(), "src", "videos");
-const publicVideosDir = path.join(process.cwd(), "public", "videos");
 
 const SAMPLE_POSTERS = [
   "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80",
@@ -36,83 +34,18 @@ function saveVideos(videos: Video[]) {
   }
 }
 
-// Auto-sync files physically present in src/videos and public/videos
-function syncVideosDirectories(catalog: Video[]): Video[] {
-  try {
-    if (!fs.existsSync(srcVideosDir)) {
-      fs.mkdirSync(srcVideosDir, { recursive: true });
-    }
-    if (!fs.existsSync(publicVideosDir)) {
-      fs.mkdirSync(publicVideosDir, { recursive: true });
-    }
-
-    const videoExts = [".mp4", ".webm", ".mov", ".mkv", ".m4v"];
-    
-    // Collect all video files from both directories
-    const srcFiles = fs.existsSync(srcVideosDir)
-      ? fs.readdirSync(srcVideosDir).filter((f) => videoExts.includes(path.extname(f).toLowerCase()))
-      : [];
-    const publicFiles = fs.existsSync(publicVideosDir)
-      ? fs.readdirSync(publicVideosDir).filter((f) => videoExts.includes(path.extname(f).toLowerCase()))
-      : [];
-
-    const allDetectedFiles = Array.from(new Set([...srcFiles, ...publicFiles]));
-
-    let updated = false;
-    const currentVideos = [...catalog];
-
-    for (const filename of allDetectedFiles) {
-      const isAlreadyIndexed = currentVideos.some(
-        (v) =>
-          v.videoUrl === `/api/stream/${filename}` ||
-          v.videoUrl === `/videos/${filename}` ||
-          v.videoUrl.endsWith(`/${filename}`)
-      );
-
-      if (!isAlreadyIndexed) {
-        const filePath = fs.existsSync(path.join(srcVideosDir, filename))
-          ? path.join(srcVideosDir, filename)
-          : path.join(publicVideosDir, filename);
-
-        const stat = fs.statSync(filePath);
-        const ext = path.extname(filename);
-        const cleanTitle = path
-          .basename(filename, ext)
-          .replace(/[-_]/g, " ")
-          .replace(/\b\w/g, (c) => c.toUpperCase());
-
-        const newEntry: Video = {
-          id: `local-${path.basename(filename, ext).replace(/[^a-zA-Z0-9_-]/g, "-")}`,
-          title: cleanTitle,
-          description: "",
-          videoUrl: `/api/stream/${filename}`,
-          thumbnailUrl: SAMPLE_POSTERS[Math.floor(Math.random() * SAMPLE_POSTERS.length)],
-          fileSize: stat.size,
-          uploadedAt: stat.mtime.toISOString(),
-          date: stat.mtime.toLocaleDateString("en-US", { month: "short", year: "numeric" }),
-        };
-
-        currentVideos.unshift(newEntry);
-        updated = true;
-      }
-    }
-
-    if (updated) {
-      saveVideos(currentVideos);
-    }
-
-    return currentVideos;
-  } catch (err) {
-    console.error("Auto-sync error:", err);
-    return catalog;
-  }
-}
-
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("q")?.toLowerCase();
     const id = searchParams.get("id");
+    const scope = searchParams.get("scope"); // "all" | "shared" | "private"
+
+    const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+    const isPrivateDomain =
+      host.toLowerCase().startsWith("private.") ||
+      scope === "all" ||
+      scope === "private";
 
     let videos = getVideos();
 
@@ -122,7 +55,19 @@ export async function GET(req: NextRequest) {
       if (!video) {
         return NextResponse.json({ error: "Video not found" }, { status: 404 });
       }
+      if (video.visibility === "private" && !isPrivateDomain && !host.includes("localhost")) {
+        return NextResponse.json({ error: "Video not found" }, { status: 404 });
+      }
       return NextResponse.json(video);
+    }
+
+    // Filter by visibility:
+    // On shared domain (e.g. videos.vivek-jha.me), only show shared videos
+    // On private domain (e.g. private.vivek-jha.me), show all videos
+    if (!isPrivateDomain && !host.includes("localhost")) {
+      videos = videos.filter((v) => v.visibility !== "private");
+    } else if (scope === "private") {
+      videos = videos.filter((v) => v.visibility === "private");
     }
 
     // Search filter
@@ -164,6 +109,7 @@ export async function POST(req: NextRequest) {
       fileSize: body.fileSize ? Number(body.fileSize) : undefined,
       uploadedAt: new Date().toISOString(),
       date: body.date || "",
+      visibility: body.visibility === "private" ? "private" : "shared",
     };
 
     videos.unshift(newVideo);
@@ -193,6 +139,7 @@ export async function PUT(req: NextRequest) {
     videos[index] = {
       ...videos[index],
       ...body,
+      visibility: body.visibility ? body.visibility : videos[index].visibility || "shared",
     };
 
     saveVideos(videos);

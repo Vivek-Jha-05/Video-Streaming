@@ -37,6 +37,13 @@ export default function VideoCard({ video }: VideoCardProps) {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
 
+        {/* Private Badge */}
+        {video.visibility === "private" && (
+          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/85 border border-amber-500/50 text-[10px] font-bold text-amber-300 flex items-center gap-1 shadow">
+            <span>🔒 Family Only</span>
+          </div>
+        )}
+
         {/* Hover Play Button */}
         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
           <div className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg">

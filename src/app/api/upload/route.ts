@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
     const customTitle = formData.get("title") as string | null;
     const customDate = formData.get("date") as string | null;
     const customDescription = formData.get("description") as string | null;
+    const customVisibility = (formData.get("visibility") as string) === "private" ? "private" : "shared";
 
     if (!file) {
       return NextResponse.json({ error: "No video file provided" }, { status: 400 });
@@ -87,6 +88,7 @@ export async function POST(req: NextRequest) {
       fileSize: stat.size,
       uploadedAt: new Date().toISOString(),
       date: formattedDate,
+      visibility: customVisibility,
     };
 
     // Replace duplicate if exists

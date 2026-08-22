@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { UploadCloud, X, Check, AlertCircle, FileVideo, Loader2 } from "lucide-react";
+import { UploadCloud, X, Film, Check, AlertCircle, Globe, Lock } from "lucide-react";
 import { formatFileSize } from "@/lib/utils";
 
 interface UploadModalProps {
@@ -15,6 +15,7 @@ export default function UploadModal({ isOpen, onClose, onSuccess }: UploadModalP
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [description, setDescription] = useState("");
+  const [visibility, setVisibility] = useState<"shared" | "private">("shared");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -46,7 +47,7 @@ export default function UploadModal({ isOpen, onClose, onSuccess }: UploadModalP
       if (file.type.startsWith("video/") || /\.(mp4|webm|mov|mkv|m4v)$/i.test(file.name)) {
         handleFileChange(file);
       } else {
-        setErrorMessage("Please select a valid video file (.mp4, .webm, .mov, etc.)");
+        setErrorMessage("Please drop a valid video file (.mp4, .webm, .mov, .mkv).");
       }
     }
   };
@@ -66,6 +67,7 @@ export default function UploadModal({ isOpen, onClose, onSuccess }: UploadModalP
     formData.append("title", title || selectedFile.name);
     formData.append("date", date);
     formData.append("description", description);
+    formData.append("visibility", visibility);
 
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/upload");
@@ -89,6 +91,7 @@ export default function UploadModal({ isOpen, onClose, onSuccess }: UploadModalP
           setTitle("");
           setDate("");
           setDescription("");
+          setVisibility("shared");
           setUploadProgress(null);
         }, 600);
       } else {
@@ -110,13 +113,13 @@ export default function UploadModal({ isOpen, onClose, onSuccess }: UploadModalP
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+      <div className="relative w-full max-w-lg rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="px-6 pt-5 pb-3 border-b border-zinc-800 flex items-center justify-between">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
           <div className="flex items-center space-x-2">
-            <div className="p-1.5 rounded-lg bg-red-600/20 text-red-500">
-              <UploadCloud className="w-5 h-5" />
+            <div className="w-7 h-7 rounded-lg bg-red-600 flex items-center justify-center text-white">
+              <Film className="w-4 h-4" />
             </div>
             <h3 className="text-base font-bold text-white">Upload Video to Library</h3>
           </div>
@@ -129,7 +132,7 @@ export default function UploadModal({ isOpen, onClose, onSuccess }: UploadModalP
           </button>
         </div>
 
-        <div className="px-6 space-y-4">
+        <div className="px-6 py-4 space-y-4 max-h-[75vh] overflow-y-auto">
           {errorMessage && (
             <div className="p-3 rounded-xl bg-red-950/80 border border-red-800 text-red-200 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -186,6 +189,46 @@ export default function UploadModal({ isOpen, onClose, onSuccess }: UploadModalP
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Visibility / Audience Selector */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
+              Audience / Privacy
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setVisibility("shared")}
+                className={`p-2.5 rounded-lg border text-left transition-all ${
+                  visibility === "shared"
+                    ? "border-emerald-500 bg-emerald-950/30 text-white"
+                    : "border-zinc-800 bg-zinc-950/50 text-zinc-400 hover:border-zinc-700"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 font-bold text-xs">
+                  <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Shared with All</span>
+                </div>
+                <p className="text-[10px] text-zinc-500 mt-0.5">videos.vivek-jha.me</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setVisibility("private")}
+                className={`p-2.5 rounded-lg border text-left transition-all ${
+                  visibility === "private"
+                    ? "border-amber-500 bg-amber-950/30 text-white"
+                    : "border-zinc-800 bg-zinc-950/50 text-zinc-400 hover:border-zinc-700"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 font-bold text-xs">
+                  <Lock className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Private (Family)</span>
+                </div>
+                <p className="text-[10px] text-zinc-500 mt-0.5">private.vivek-jha.me</p>
+              </button>
+            </div>
           </div>
 
           {/* Metadata Inputs */}
@@ -258,14 +301,11 @@ export default function UploadModal({ isOpen, onClose, onSuccess }: UploadModalP
           >
             {isUploading ? (
               <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 <span>Uploading...</span>
               </>
             ) : (
-              <>
-                <UploadCloud className="w-3.5 h-3.5" />
-                <span>Start Upload</span>
-              </>
+              <span>Upload Video</span>
             )}
           </button>
         </div>

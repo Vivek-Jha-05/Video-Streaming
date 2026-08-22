@@ -2,18 +2,20 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { 
-  Trash2, 
-  Edit, 
-  Play, 
-  FolderSearch, 
-  Check, 
-  AlertCircle, 
-  FileVideo, 
-  RefreshCw, 
-  Plus, 
+import {
   ArrowLeft,
-  UploadCloud
+  Plus,
+  Trash2,
+  Edit,
+  Play,
+  Check,
+  AlertCircle,
+  RefreshCw,
+  FolderSearch,
+  FileVideo,
+  UploadCloud,
+  Globe,
+  Lock,
 } from "lucide-react";
 import { Video } from "@/types/video";
 import { formatTime, formatDate, formatFileSize } from "@/lib/utils";
@@ -31,10 +33,12 @@ const SAMPLE_POSTERS = [
 export default function ManagePage() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
-  const [scannedFiles, setScannedFiles] = useState<any[]>([]);
-  const [scanning, setScanning] = useState(false);
   const [activeTab, setActiveTab] = useState<"library" | "add" | "scan">("library");
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+
+  // Scanned files
+  const [scannedFiles, setScannedFiles] = useState<any[]>([]);
+  const [scanning, setScanning] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -46,6 +50,7 @@ export default function ManagePage() {
     duration: 300,
     fileSize: 0,
     date: "",
+    visibility: "shared" as "shared" | "private",
   });
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -54,7 +59,7 @@ export default function ManagePage() {
   const fetchVideos = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/videos");
+      const res = await fetch("/api/videos?scope=all");
       const data = await res.json();
       if (Array.isArray(data)) {
         setVideos(data);
@@ -152,6 +157,7 @@ export default function ManagePage() {
       duration: video.duration || 0,
       fileSize: video.fileSize || 0,
       date: video.date || "",
+      visibility: video.visibility === "private" ? "private" : "shared",
     });
     setActiveTab("add");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -167,6 +173,7 @@ export default function ManagePage() {
       duration: 300,
       fileSize: file.size,
       date: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+      visibility: "shared",
     });
     setEditingId(null);
     setActiveTab("add");
@@ -183,6 +190,7 @@ export default function ManagePage() {
       duration: 300,
       fileSize: 0,
       date: "",
+      visibility: "shared",
     });
   };
 
@@ -216,7 +224,7 @@ export default function ManagePage() {
               Manage Videos
             </h1>
             <p className="text-xs text-zinc-400 mt-0.5">
-              Upload new videos, view your collection, or edit details.
+              Upload new videos, configure privacy, or edit details.
             </p>
           </div>
 
@@ -287,6 +295,7 @@ export default function ManagePage() {
                 <thead className="bg-zinc-900 border-b border-zinc-800 text-[11px] uppercase tracking-wider text-zinc-400 font-semibold">
                   <tr>
                     <th className="p-3.5">Video</th>
+                    <th className="p-3.5">Audience</th>
                     <th className="p-3.5">Duration</th>
                     <th className="p-3.5">Date</th>
                     <th className="p-3.5 text-right">Actions</th>
@@ -307,6 +316,19 @@ export default function ManagePage() {
                           <p className="font-semibold text-zinc-100 line-clamp-1">{video.title}</p>
                           <p className="text-[10px] text-zinc-500 font-mono line-clamp-1">{video.videoUrl}</p>
                         </div>
+                      </td>
+                      <td className="p-3.5">
+                        {video.visibility === "private" ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/80 text-amber-300 border border-amber-800/80">
+                            <Lock className="w-3 h-3" />
+                            <span>Private (Immediate Family)</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-800/80">
+                            <Globe className="w-3 h-3" />
+                            <span>Shared (All Relatives)</span>
+                          </span>
+                        )}
                       </td>
                       <td className="p-3.5 font-mono text-zinc-400">
                         {video.duration ? formatTime(video.duration) : "—"}
@@ -349,13 +371,13 @@ export default function ManagePage() {
         {activeTab === "add" && (
           <form
             onSubmit={handleSubmit}
-            className="p-5 sm:p-6 rounded-xl bg-zinc-900/80 border border-zinc-800 space-y-4 max-w-2xl"
+            className="p-6 rounded-xl bg-zinc-900/70 border border-zinc-800 space-y-5 max-w-2xl mx-auto"
           >
             <h2 className="text-base font-bold text-white border-b border-zinc-800 pb-3">
-              {editingId ? "Edit Video" : "Add Video Manually"}
+              {editingId ? "Edit Video Entry" : "Add Video Manually"}
             </h2>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               {/* Title */}
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-zinc-300">
@@ -371,17 +393,59 @@ export default function ManagePage() {
                 />
               </div>
 
+              {/* Visibility / Audience Selector */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-zinc-300">
+                  Who can watch this video? *
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div
+                    onClick={() => setFormData({ ...formData, visibility: "shared" })}
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      formData.visibility === "shared"
+                        ? "border-emerald-500 bg-emerald-950/20 text-white"
+                        : "border-zinc-800 bg-zinc-950/60 text-zinc-400 hover:border-zinc-700"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-bold text-xs">
+                      <Globe className="w-4 h-4 text-emerald-400" />
+                      <span>Shared (All Relatives)</span>
+                    </div>
+                    <p className="text-[10px] text-zinc-400 mt-1">
+                      Visible on <code className="text-emerald-300">videos.vivek-jha.me</code> & all domains.
+                    </p>
+                  </div>
+
+                  <div
+                    onClick={() => setFormData({ ...formData, visibility: "private" })}
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      formData.visibility === "private"
+                        ? "border-amber-500 bg-amber-950/20 text-white"
+                        : "border-zinc-800 bg-zinc-950/60 text-zinc-400 hover:border-zinc-700"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-bold text-xs">
+                      <Lock className="w-4 h-4 text-amber-400" />
+                      <span>Private (Immediate Family)</span>
+                    </div>
+                    <p className="text-[10px] text-zinc-400 mt-1">
+                      Visible ONLY on <code className="text-amber-300">private.vivek-jha.me</code>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Video URL */}
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-zinc-300">
-                  Video URL or Local Path *
+                  Video URL or Cloud Link *
                 </label>
                 <input
                   type="text"
                   required
                   value={formData.videoUrl}
                   onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                  placeholder="e.g. /api/stream/my-clip.mp4 or https://..."
+                  placeholder="e.g. https://pub-xxx.r2.dev/video.mp4"
                   className="w-full px-3 py-2 bg-zinc-950 border border-zinc-700 rounded-lg text-white text-xs sm:text-sm font-mono outline-none focus:border-zinc-500"
                 />
               </div>
@@ -453,9 +517,9 @@ export default function ManagePage() {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-xs font-bold text-white shadow"
+                className="px-5 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow"
               >
-                {editingId ? "Save Changes" : "Add Video"}
+                {editingId ? "Update Video" : "Save Video"}
               </button>
             </div>
           </form>
