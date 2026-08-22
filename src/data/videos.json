@@ -1,5 +1,16 @@
 [
   {
+    "id": "r2-yuvan-muran",
+    "title": "Yuvan Muran",
+    "description": "Family Celebration & Moments (1080p Theater Quality)",
+    "videoUrl": "https://pub-c67ac6ce7b0146dca5d26b10d4d8ec73.r2.dev/yuvan_Muran_Compressed.mp4",
+    "thumbnailUrl": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80",
+    "fileSize": 2781445120,
+    "uploadedAt": "2026-08-22T07:35:48.000Z",
+    "date": "Aug 2026",
+    "visibility": "private"
+  },
+  {
     "id": "r2-vivah",
     "title": "Vivah",
     "description": "Full Movie (1080p Theater Quality)",
@@ -7,6 +18,7 @@
     "thumbnailUrl": "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80",
     "fileSize": 6743825671,
     "uploadedAt": "2026-08-22T05:37:18.205Z",
-    "date": "Aug 2026"
+    "date": "Aug 2026",
+    "visibility": "shared"
   }
 ]
