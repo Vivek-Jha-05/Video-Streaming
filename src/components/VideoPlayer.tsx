@@ -28,7 +28,7 @@ export default function VideoPlayer({ video, onEnded }: VideoPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const progressTrackRef = useRef<HTMLDivElement>(null);
 
-  // Player States
+  const [videoSrc, setVideoSrc] = useState(video.videoUrl);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(video.duration || 0);
@@ -46,6 +46,18 @@ export default function VideoPlayer({ video, onEnded }: VideoPlayerProps) {
   const [centerAnimation, setCenterAnimation] = useState<"play" | "pause" | "fwd" | "rwd" | null>(null);
 
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setVideoSrc(video.videoUrl);
+  }, [video.videoUrl]);
+
+  const handleVideoError = () => {
+    const fileName = video.videoUrl.split("/").pop();
+    if (fileName && !videoSrc.startsWith("/api/stream/")) {
+      console.warn("Primary video stream failed, falling back to local stream:", `/api/stream/${fileName}`);
+      setVideoSrc(`/api/stream/${fileName}`);
+    }
+  };
 
   // Resume playback on initial load
   useEffect(() => {
@@ -291,7 +303,8 @@ export default function VideoPlayer({ video, onEnded }: VideoPlayerProps) {
       {/* Video Stream Element */}
       <video
         ref={videoRef}
-        src={video.videoUrl}
+        src={videoSrc}
+        onError={handleVideoError}
         poster={video.thumbnailUrl}
         preload="metadata"
         playsInline
