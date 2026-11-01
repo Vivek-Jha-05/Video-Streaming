@@ -24,13 +24,40 @@ function loadEnv() {
 
 loadEnv();
 
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || "video-player";
+const args = process.argv.slice(2);
+let bucketChoice = "1";
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === "--bucket" || args[i] === "-b") {
+    bucketChoice = args[i + 1] || "1";
+    i++;
+  }
+}
+
+const isBucket2 = bucketChoice === "2" || bucketChoice.toLowerCase() === "videos";
+
+const R2_ACCOUNT_ID = isBucket2
+  ? (process.env.R2_ACCOUNT_ID_2 || "3b4b4eaa1670dc3832cb5b855c55f89b")
+  : (process.env.R2_ACCOUNT_ID || "");
+
+const R2_ACCESS_KEY_ID = isBucket2
+  ? (process.env.R2_ACCESS_KEY_ID_2 || "")
+  : (process.env.R2_ACCESS_KEY_ID || "");
+
+const R2_SECRET_ACCESS_KEY = isBucket2
+  ? (process.env.R2_SECRET_ACCESS_KEY_2 || "")
+  : (process.env.R2_SECRET_ACCESS_KEY || "");
+
+const R2_BUCKET_NAME = isBucket2
+  ? (process.env.R2_BUCKET_NAME_2 || "videos")
+  : (process.env.R2_BUCKET_NAME || "video-player");
 
 async function setCors() {
-  console.log("Setting CORS Policy on Cloudflare R2 bucket:", R2_BUCKET_NAME);
+  console.log(`Setting CORS Policy on Cloudflare R2 bucket '${R2_BUCKET_NAME}' (${isBucket2 ? "Secondary: Account 2" : "Primary: Account 1"})...`);
+
+  if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+    console.error(`\n❌ Cloudflare R2 Credentials missing for ${isBucket2 ? "Secondary Bucket" : "Primary Bucket"}! Check .env.local.`);
+    process.exit(1);
+  }
 
   const s3Client = new S3Client({
     region: "auto",

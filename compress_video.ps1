@@ -23,27 +23,44 @@ if (-not (Test-Path $InputFile)) {
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 $ffmpegCmd = "ffmpeg"
 
-# Test if NVENC (NVIDIA GPU) is available
-$useGpu = $false
+# Test if Hardware Acceleration (QSV / NVENC) is available
+$encoder = "libx264"
+$extraParams = @("-preset", "medium")
+
+# 1. Check NVIDIA NVENC
 try {
-    $testResult = & $ffmpegCmd -y -i "$InputFile" -t 1 -c:v h264_nvenc "src/videos/.gpu_check.mp4" 2>&1
+    $null = & $ffmpegCmd -y -f lavfi -i color=c=black:s=128x128:d=0.1 -c:v h264_nvenc "src/videos/.test_enc.mp4" 2>&1
     if ($LASTEXITCODE -eq 0) {
-        $useGpu = $true
-        Remove-Item -Force -ErrorAction SilentlyContinue "src/videos/.gpu_check.mp4"
+        $encoder = "h264_nvenc"
+        $extraParams = @("-preset", "p6")
+        Remove-Item -Force -ErrorAction SilentlyContinue "src/videos/.test_enc.mp4"
     }
-} catch {
-    $useGpu = $false
+} catch {}
+
+# 2. Check Intel QSV if NVENC not available
+if ($encoder -eq "libx264") {
+    try {
+        $null = & $ffmpegCmd -y -f lavfi -i color=c=black:s=128x128:d=0.1 -c:v h264_qsv "src/videos/.test_enc.mp4" 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $encoder = "h264_qsv"
+            $extraParams = @()
+            Remove-Item -Force -ErrorAction SilentlyContinue "src/videos/.test_enc.mp4"
+        }
+    } catch {}
 }
 
-if ($useGpu) {
-    Write-Host "⚡ NVIDIA GPU Detected! Using Ultra-Fast NVENC Hardware Encoding (~12-14 mins)..." -ForegroundColor Green
-    Write-Host ""
-    & $ffmpegCmd -i "$InputFile" -c:v h264_nvenc -b:v $VideoBitrate -maxrate 12000k -bufsize 20000k -preset p6 -movflags +faststart -c:a aac -b:a $AudioBitrate "$OutputFile"
+if ($encoder -eq "h264_nvenc") {
+    Write-Host "⚡ NVIDIA GPU Detected! Using NVENC Hardware Acceleration..." -ForegroundColor Green
+} elseif ($encoder -eq "h264_qsv") {
+    Write-Host "⚡ Intel Quick Sync (QSV) Detected! Using Intel GPU Hardware Acceleration (~3-4x speed)..." -ForegroundColor Green
 } else {
     Write-Host "💻 Using Multi-threaded CPU Encoding (libx264)..." -ForegroundColor Yellow
-    Write-Host ""
-    & $ffmpegCmd -i "$InputFile" -c:v libx264 -b:v $VideoBitrate -maxrate 12000k -bufsize 20000k -preset medium -movflags +faststart -c:a aac -b:a $AudioBitrate "$OutputFile"
 }
+
+Write-Host "Encoding with $encoder..." -ForegroundColor Cyan
+Write-Host ""
+
+& $ffmpegCmd -y -i "$InputFile" -c:v $encoder -b:v $VideoBitrate -maxrate 12000k -bufsize 20000k @extraParams -movflags +faststart -c:a aac -b:a $AudioBitrate "$OutputFile"
 
 if ($LASTEXITCODE -eq 0 -and (Test-Path $OutputFile)) {
     $originalSize = (Get-Item $InputFile).Length / 1GB
