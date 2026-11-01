@@ -13,6 +13,7 @@ import {
   RotateCw,
   PictureInPicture2,
   Check,
+  AlertCircle,
 } from "lucide-react";
 import { Video } from "@/types/video";
 import { formatTime } from "@/lib/utils";
@@ -44,11 +45,13 @@ export default function VideoPlayer({ video, onEnded }: VideoPlayerProps) {
   const [hoverTime, setHoverTime] = useState<number | null>(null);
   const [hoverPosition, setHoverPosition] = useState<number>(0);
   const [centerAnimation, setCenterAnimation] = useState<"play" | "pause" | "fwd" | "rwd" | null>(null);
+  const [streamError, setStreamError] = useState<string | null>(null);
 
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setVideoSrc(video.videoUrl);
+    setStreamError(null);
   }, [video.videoUrl]);
 
   const handleVideoError = () => {
@@ -56,6 +59,9 @@ export default function VideoPlayer({ video, onEnded }: VideoPlayerProps) {
     if (fileName && !videoSrc.startsWith("/api/stream/")) {
       console.warn("Primary video stream failed, falling back to local stream:", `/api/stream/${fileName}`);
       setVideoSrc(`/api/stream/${fileName}`);
+    } else {
+      console.error("Video stream unavailable:", videoSrc);
+      setStreamError("This video could not be loaded (404 Not Found). The file may not have been uploaded to Cloudflare R2 yet.");
     }
   };
 
@@ -327,6 +333,39 @@ export default function VideoPlayer({ video, onEnded }: VideoPlayerProps) {
             {centerAnimation === "pause" && <Pause className="w-10 h-10 fill-white" />}
             {centerAnimation === "fwd" && <RotateCw className="w-10 h-10" />}
             {centerAnimation === "rwd" && <RotateCcw className="w-10 h-10" />}
+          </div>
+        </div>
+      )}
+
+      {/* Video Stream Error Banner */}
+      {streamError && (
+        <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/30 text-cinema-accent flex items-center justify-center mb-4 shadow-lg shadow-red-500/10">
+            <AlertCircle className="w-7 h-7" />
+          </div>
+          <h3 className="text-lg font-bold text-white mb-2">Video Stream Unavailable</h3>
+          <p className="text-sm text-zinc-400 max-w-md mb-6 leading-relaxed">
+            {streamError}
+          </p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                setStreamError(null);
+                setVideoSrc(video.videoUrl);
+                if (videoRef.current) {
+                  videoRef.current.load();
+                }
+              }}
+              className="px-4 py-2 rounded-xl bg-cinema-accent hover:bg-red-600 text-xs sm:text-sm font-bold text-white transition-all shadow-lg shadow-cinema-accent/30"
+            >
+              Retry Connection
+            </button>
+            <a
+              href="/"
+              className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs sm:text-sm font-semibold text-zinc-300 transition-colors"
+            >
+              Back to Catalog
+            </a>
           </div>
         </div>
       )}

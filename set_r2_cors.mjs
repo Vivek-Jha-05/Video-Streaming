@@ -59,6 +59,12 @@ async function setCors() {
     process.exit(1);
   }
 
+  if (R2_ACCESS_KEY_ID.length !== 32) {
+    console.error(`\n❌ Invalid R2 Access Key ID length (${R2_ACCESS_KEY_ID.length} chars). Expected 32-character hex ID, not the 44-character token.`);
+    console.log("👉 Please check .env.local and ensure R2_ACCESS_KEY_ID" + (isBucket2 ? "_2" : "") + " is the 32-character S3 Access Key ID from Cloudflare.");
+    process.exit(1);
+  }
+
   const s3Client = new S3Client({
     region: "auto",
     endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
